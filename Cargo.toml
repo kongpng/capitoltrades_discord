@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/*"]
+members = ["crates/discord_bot", "crates/capitoltrades_api"]
 
 [profile.dev.package]
 insta.opt-level = 3
