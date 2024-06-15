@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM tracked_politicians WHERE user_id = $1 AND politician_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "74b90215c835d450a3a29fead1ffd41667390a78e6e55e962c6c7d8021d54195"
+}

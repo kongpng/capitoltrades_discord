@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: capitoltrades_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://user:password@db:5432/capitoltrades_db
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+    volumes:
+      - ./crates/telegram_bot/migrations:/app/migrations
+    command: ["./bot"]
+
+  notify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://user:password@db:5432/capitoltrades_db
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+    volumes:
+      - ./crates/telegram_bot/migrations:/app/migrations
+    command: ["./notify"]
+
+volumes:
+  postgres_data:

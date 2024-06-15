@@ -1,0 +1,24 @@
+[package]
+name = "capitoltrades_discord_bot"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+capitoltrades_api = { path = "../capitoltrades_api" }
+chrono = "0.4.38"
+tokio = { version = "1.38.0", features = ["rt-multi-thread", "macros"] }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+
+sqlx = { version = "0.7", features = [
+    "runtime-tokio",
+    "json",
+    "macros",
+    "postgres",
+] }
+rand = "0.8.5"
+serenity = { version = "0.12.2", features = ["builder", "collector"] }
+poise = "0.6.1"
+serde_json = "1.0.117"
+pulldown-cmark = "0.11.0"
+dotenv = "0.15.0"

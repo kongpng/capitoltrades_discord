@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM tracked_issuers WHERE user_id = $1 AND issuer_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bd1298762c2cb7b69a281368c8bb059bc053bae8eb20ca416c96471b724cddf2"
+}

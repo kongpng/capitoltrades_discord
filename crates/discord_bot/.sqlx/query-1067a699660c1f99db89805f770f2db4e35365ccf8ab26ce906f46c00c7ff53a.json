@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO notified_trades (user_id, tx_id)\r\nVALUES ($1, $2) ON CONFLICT DO NOTHING;\r\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1067a699660c1f99db89805f770f2db4e35365ccf8ab26ce906f46c00c7ff53a"
+}
