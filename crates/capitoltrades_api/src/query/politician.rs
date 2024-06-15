@@ -1,8 +1,12 @@
-use std::str::FromStr;
+use std::{default, str::FromStr};
 
+use scraper::{Html, Selector};
 use url::Url;
 
-use crate::types::{IssuerID, Party};
+use crate::{
+    types::{IssuerID, Meta, PaginatedResponse, Party, PoliticianDetail},
+    Error,
+};
 
 use super::{
     common::{QueryCommon, SortDirection},

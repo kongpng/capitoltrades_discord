@@ -1,9 +1,13 @@
+use scraper::{Html, Selector};
 use serde::de::DeserializeOwned;
 use url::Url;
 
 use crate::{
     query::{IssuerQuery, PoliticianQuery, Query, TradeQuery},
-    types::{IssuerDetail, PaginatedResponse, PoliticianDetail, Response, Trade},
+    types::{
+        meta::{DataType, Extractable},
+        IssuerDetail, PaginatedResponse, PoliticianDetail, Response, Trade,
+    },
     user_agent::get_user_agent,
     Error,
 };
@@ -15,7 +19,7 @@ pub struct Client {
 impl Client {
     pub fn new() -> Self {
         Self {
-            base_api_url: "https://bff.capitoltrades.com",
+            base_api_url: "https://capitoltrades.com",
         }
     }
 
@@ -27,9 +31,9 @@ impl Client {
         }
     }
 
-    async fn get<T, Q>(&self, path: &str, query: Option<&Q>) -> Result<T, Error>
+    async fn fetch_html<T, Q>(&self, path: &str, query: Option<&Q>) -> Result<T, Error>
     where
-        T: DeserializeOwned,
+        T: DeserializeOwned + Extractable,
         Q: Query,
     {
         let url = self.get_url(path, query);
@@ -56,18 +60,27 @@ impl Client {
                 tracing::error!("Failed to get resource: {}", e);
                 Error::RequestFailed
             })?
-            .json::<T>()
+            .text()
             .await
             .map_err(|e| {
-                tracing::error!("Failed to parse resource: {}", e);
+                tracing::error!("Failed to parse response: {}", e);
                 Error::RequestFailed
             })?;
-        Ok(resp)
+
+        let document = Html::parse_document(&resp);
+        let data = T::extract_data(&document)?;
+        Ok(data)
     }
 
     pub async fn get_trades(&self, query: &TradeQuery) -> Result<PaginatedResponse<Trade>, Error> {
-        self.get::<PaginatedResponse<Trade>, TradeQuery>("/trades", Some(query))
-            .await
+        let url = self.get_url("/trades", Some(query));
+        let document = self
+            .fetch_html(url.to_string().as_str(), Some(query))
+            .await?;
+        PaginatedResponse::<Trade>::extract_data(&document, DataType::Trade).map_err(|e| {
+            tracing::error!("Failed to extract data: {}", e);
+            Error::DataExtractionFailed
+        })
     }
 
     pub async fn get_politicians(

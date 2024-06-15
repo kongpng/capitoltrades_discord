@@ -1,4 +1,4 @@
-mod meta;
+pub mod meta;
 pub use self::meta::{Meta, PaginatedResponse, Paging, Response};
 
 mod issuer;

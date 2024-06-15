@@ -3,7 +3,7 @@ use crate::errors::HandlerResult;
 use crate::markdown::trades::trade_to_markdown;
 use crate::Data;
 use capitoltrades_api::types::{PaginatedResponse, Trade};
-use capitoltrades_api::{Client, Query, SortDirection, TradeQuery, TradeSortBy};
+use capitoltrades_api::{Client, PoliticianQuery, Query, SortDirection, TradeQuery, TradeSortBy};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -90,12 +90,12 @@ fn text_from_response(response: &PaginatedResponse<Trade>) -> String {
 #[poise::command(prefix_command, slash_command)]
 pub async fn trades(ctx: Context<'_>) -> Result<(), Error> {
     let client = Client::new();
-    let query = TradeQuery::default();
-    let response = client.get_trades(&query).await?;
+    let query = PoliticianQuery::default();
+    let response = client.get_politicians(&query).await?;
     let text = text_from_response(&response);
 
     let channel_id = ctx.channel_id();
-    let files = Vec::new(); 
+    let files = Vec::new();
     let map = serde_json::json!({
         "content": text,
         "components": list_keyboard(&query),

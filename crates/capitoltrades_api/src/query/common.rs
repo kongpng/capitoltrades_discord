@@ -1,6 +1,10 @@
 use std::str::FromStr;
 
+use scraper::Html;
+use serde::de::DeserializeOwned;
 use url::Url;
+
+use crate::Error;
 
 pub trait Query {
     fn add_to_url(&self, url: &Url) -> Url;

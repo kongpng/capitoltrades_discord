@@ -1,23 +1,27 @@
+use std::clone;
+
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+
+use super::meta::DataType;
 
 extern crate serde_json;
 
 pub type IssuerID = i64;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct IssuerDetail {
     #[serde(rename = "_issuerId")]
     pub issuer_id: IssuerID,
 
     #[serde(rename = "_stateId")]
-    state_id: Option<String>,
+    pub state_id: Option<String>,
 
     #[serde(rename = "c2iq")]
-    c2_iq: Option<String>,
+    pub c2_iq: Option<String>,
 
-    country: Option<String>,
+    pub country: Option<String>,
 
     pub issuer_name: String,
 
@@ -30,7 +34,7 @@ pub struct IssuerDetail {
     pub stats: Stats,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Performance {
     pub eod_prices: Vec<Vec<EodPrice>>,
@@ -73,13 +77,22 @@ pub struct Performance {
 
     pub ytd_change: f64,
 }
+impl From<DataType> for IssuerDetail {
+    fn from(item: DataType) -> Self {
+        match item {
+            DataType::IssuerDetail(issuer) => issuer,
+            _ => panic!("Expected DataItem::IssuerDetail"),
+        }
+    }
+}
+
 impl Performance {
     pub fn last_price(&self) -> Option<f64> {
         EodPrice::last_price_from_vec(&self.eod_prices)
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Stats {
     #[serde(rename = "countTrades")]
     pub count_trades: i64,
@@ -94,7 +107,7 @@ pub struct Stats {
     pub date_last_traded: NaiveDate,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum EodPrice {
     Double(f64),

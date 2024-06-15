@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     issuer::Sector,
+    meta::DataType,
     politician::{Politician, PoliticianID},
     Chamber, IssuerID,
 };
@@ -23,7 +24,7 @@ pub enum TradeSize {
     From25Mto50M = 10,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Trade {
     #[serde(rename = "_txId")]
@@ -33,7 +34,7 @@ pub struct Trade {
     pub politician_id: PoliticianID,
 
     #[serde(rename = "_assetId")]
-    asset_id: i64,
+    pub asset_id: i64,
 
     #[serde(rename = "_issuerId")]
     pub issuer_id: IssuerID,
@@ -46,34 +47,34 @@ pub struct Trade {
 
     pub tx_type: TxType,
 
-    tx_type_extended: Option<serde_json::Value>,
+    pub tx_type_extended: Option<serde_json::Value>,
 
-    has_capital_gains: bool,
+    pub has_capital_gains: bool,
 
-    owner: Owner,
+    pub owner: Owner,
 
-    chamber: Chamber,
+    pub chamber: Chamber,
 
     pub price: Option<f64>,
 
     pub size: Option<i64>,
 
-    size_range_high: Option<i64>,
+    pub size_range_high: Option<i64>,
 
-    size_range_low: Option<i64>,
+    pub size_range_low: Option<i64>,
 
     pub value: i64,
 
-    filing_id: i64,
+    pub filing_id: i64,
 
     #[serde(rename = "filingURL")]
     pub filing_url: String,
 
     pub reporting_gap: i64,
 
-    comment: Option<String>,
+    pub comment: Option<String>,
 
-    committees: Vec<String>,
+    pub committees: Vec<String>,
 
     pub asset: Asset,
 
@@ -81,10 +82,19 @@ pub struct Trade {
 
     pub politician: Politician,
 
-    labels: Vec<String>,
+    pub labels: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+impl From<DataType> for Trade {
+    fn from(item: DataType) -> Self {
+        match item {
+            DataType::Trade(trade) => trade,
+            _ => panic!("Expected DataItem::Trade"),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Asset {
     pub asset_type: String,
@@ -94,25 +104,25 @@ pub struct Asset {
     pub instrument: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Issuer {
     #[serde(rename = "_stateId")]
-    state_id: Option<String>,
+    pub state_id: Option<String>,
 
     #[serde(rename = "c2iq")]
-    c2_iq: Option<String>,
+    pub c2_iq: Option<String>,
 
-    country: Option<String>,
+    pub country: Option<String>,
 
     pub issuer_name: String,
 
     pub issuer_ticker: Option<String>,
 
-    sector: Option<Sector>,
+    pub sector: Option<Sector>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 #[serde(rename_all = "kebab-case")]
 pub enum Owner {
     Child,
@@ -123,7 +133,7 @@ pub enum Owner {
     Spouse,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 #[serde(rename_all = "kebab-case")]
 pub enum TxType {
     Buy,

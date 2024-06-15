@@ -1,9 +1,11 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
+use super::meta::DataType;
+
 pub type PoliticianID = String;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Politician {
     #[serde(rename = "_stateId")]
@@ -11,20 +13,20 @@ pub struct Politician {
 
     pub chamber: Chamber,
 
-    dob: String,
+    pub dob: String,
 
     pub first_name: String,
 
-    gender: Gender,
+    pub gender: Gender,
 
     pub last_name: String,
 
-    nickname: Option<String>,
+    pub nickname: Option<String>,
 
     pub party: Party,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PoliticianDetail {
     #[serde(rename = "_politicianId")]
@@ -35,35 +37,35 @@ pub struct PoliticianDetail {
 
     pub party: Party,
 
-    party_other: Option<serde_json::Value>,
+    pub party_other: Option<serde_json::Value>,
 
-    district: Option<String>,
+    pub district: Option<String>,
 
     pub first_name: String,
 
     pub last_name: String,
 
-    nickname: Option<String>,
+    pub nickname: Option<String>,
 
-    middle_name: Option<String>,
+    pub middle_name: Option<String>,
 
-    full_name: String,
+    pub full_name: String,
 
-    dob: String,
+    pub dob: String,
 
-    gender: Gender,
+    pub gender: Gender,
 
-    social_facebook: Option<String>,
+    pub social_facebook: Option<String>,
 
-    social_twitter: Option<String>,
+    pub social_twitter: Option<String>,
 
-    social_youtube: Option<String>,
+    pub social_youtube: Option<String>,
 
-    website: Option<String>,
+    pub website: Option<String>,
 
     pub chamber: Chamber,
 
-    committees: Vec<String>,
+    pub committees: Vec<String>,
 
     pub stats: Stats,
 }
@@ -82,7 +84,16 @@ impl Into<Politician> for PoliticianDetail {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+impl From<DataType> for PoliticianDetail {
+    fn from(item: DataType) -> Self {
+        match item {
+            DataType::PoliticianDetail(politician) => politician,
+            _ => panic!("Expected DataItem::PoliticianDetail"),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Stats {
     pub date_last_traded: Option<NaiveDate>,
@@ -94,7 +105,7 @@ pub struct Stats {
     pub volume: i64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum Chamber {
     #[serde(rename = "house")]
     House,
@@ -103,7 +114,7 @@ pub enum Chamber {
     Senate,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum Gender {
     #[serde(rename = "female")]
     Female,
@@ -122,6 +133,16 @@ pub enum Party {
 
     #[serde(rename = "other")]
     Other,
+}
+
+impl From<&str> for Party {
+    fn from(s: &str) -> Self {
+        match s {
+            "democrat" => Party::Democrat,
+            "republican" => Party::Republican,
+            _ => Party::Other,
+        }
+    }
 }
 impl std::fmt::Display for Party {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
