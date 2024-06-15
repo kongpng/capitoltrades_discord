@@ -1,11 +1,16 @@
+use std::default;
+
 use chrono::NaiveDate;
+use scraper::{ElementRef, Selector};
 use serde::{Deserialize, Serialize};
 
-use super::meta::DataType;
+use crate::Error;
+
+use super::trade::ExtractableItem;
 
 pub type PoliticianID = String;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Politician {
     #[serde(rename = "_stateId")]
@@ -24,6 +29,36 @@ pub struct Politician {
     pub nickname: Option<String>,
 
     pub party: Party,
+}
+
+impl ExtractableItem for PoliticianDetail {
+    fn selector() -> Selector {
+        Selector::parse("article.issuer-item").unwrap()
+    }
+
+    fn extract(item: ElementRef) -> Result<Self, Error> {
+        Ok(PoliticianDetail {
+            politician_id: "".to_string(),
+            state_id: "".to_string(),
+            party: Party::Democrat,
+            party_other: None,
+            district: None,
+            first_name: "".to_string(),
+            last_name: "".to_string(),
+            nickname: None,
+            middle_name: None,
+            full_name: "".to_string(),
+            dob: "".to_string(),
+            gender: Gender::Male,
+            social_facebook: None,
+            social_twitter: None,
+            social_youtube: None,
+            website: None,
+            chamber: Chamber::House,
+            committees: vec![],
+            stats: Stats::default(),
+        })
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -84,16 +119,7 @@ impl Into<Politician> for PoliticianDetail {
     }
 }
 
-impl From<DataType> for PoliticianDetail {
-    fn from(item: DataType) -> Self {
-        match item {
-            DataType::PoliticianDetail(politician) => politician,
-            _ => panic!("Expected DataItem::PoliticianDetail"),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Stats {
     pub date_last_traded: Option<NaiveDate>,
@@ -105,8 +131,9 @@ pub struct Stats {
     pub volume: i64,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub enum Chamber {
+    #[default]
     #[serde(rename = "house")]
     House,
 
@@ -114,8 +141,9 @@ pub enum Chamber {
     Senate,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub enum Gender {
+    #[default]
     #[serde(rename = "female")]
     Female,
 
@@ -123,8 +151,9 @@ pub enum Gender {
     Male,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub enum Party {
+    #[default]
     #[serde(rename = "democrat")]
     Democrat,
 

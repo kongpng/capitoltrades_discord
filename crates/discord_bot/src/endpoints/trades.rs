@@ -2,7 +2,8 @@ use super::actions::Action;
 use crate::errors::HandlerResult;
 use crate::markdown::trades::trade_to_markdown;
 use crate::Data;
-use capitoltrades_api::types::{PaginatedResponse, Trade};
+use capitoltrades_api::types::trade::Trade;
+use capitoltrades_api::types::PaginatedResponse;
 use capitoltrades_api::{Client, PoliticianQuery, Query, SortDirection, TradeQuery, TradeSortBy};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -90,8 +91,8 @@ fn text_from_response(response: &PaginatedResponse<Trade>) -> String {
 #[poise::command(prefix_command, slash_command)]
 pub async fn trades(ctx: Context<'_>) -> Result<(), Error> {
     let client = Client::new();
-    let query = PoliticianQuery::default();
-    let response = client.get_politicians(&query).await?;
+    let mut query = TradeQuery::default().with_page_size(4).with_page(1);
+    let response = client.get_trades(&mut query).await?;
     let text = text_from_response(&response);
 
     let channel_id = ctx.channel_id();

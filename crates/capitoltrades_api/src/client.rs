@@ -5,8 +5,8 @@ use url::Url;
 use crate::{
     query::{IssuerQuery, PoliticianQuery, Query, TradeQuery},
     types::{
-        meta::{DataType, Extractable},
-        IssuerDetail, PaginatedResponse, PoliticianDetail, Response, Trade,
+        meta::Extractable, trade::Trade, IssuerDetail, PaginatedResponse, PoliticianDetail,
+        Response,
     },
     user_agent::get_user_agent,
     Error,
@@ -31,9 +31,8 @@ impl Client {
         }
     }
 
-    async fn fetch_html<T, Q>(&self, path: &str, query: Option<&Q>) -> Result<T, Error>
+    async fn fetch_html<Q>(&self, path: &str, query: Option<&Q>) -> Result<String, Error>
     where
-        T: DeserializeOwned + Extractable,
         Q: Query,
     {
         let url = self.get_url(path, query);
@@ -44,7 +43,7 @@ impl Client {
                 tracing::error!("Failed to build HTTP client: {}", e);
                 Error::RequestFailed
             })?;
-        let resp = client
+        let html = client
             .get(url)
             .header("content-type", "application/json")
             .header("origin", "https://www.capitoltrades.com")
@@ -67,20 +66,28 @@ impl Client {
                 Error::RequestFailed
             })?;
 
-        let document = Html::parse_document(&resp);
-        let data = T::extract_data(&document)?;
-        Ok(data)
+        Ok(html)
     }
 
-    pub async fn get_trades(&self, query: &TradeQuery) -> Result<PaginatedResponse<Trade>, Error> {
-        let url = self.get_url("/trades", Some(query));
-        let document = self
-            .fetch_html(url.to_string().as_str(), Some(query))
-            .await?;
-        PaginatedResponse::<Trade>::extract_data(&document, DataType::Trade).map_err(|e| {
+    async fn get<T, Q>(&self, path: &str, query: Option<&Q>) -> Result<T, Error>
+    where
+        T: DeserializeOwned + Extractable,
+        Q: Query,
+    {
+        let html = self.fetch_html(path, query).await?;
+        let document = Html::parse_document(&html);
+        T::extract_data(&document).map_err(|e| {
             tracing::error!("Failed to extract data: {}", e);
             Error::DataExtractionFailed
         })
+    }
+
+    pub async fn get_trades(&self, query: &TradeQuery) -> Result<PaginatedResponse<Trade>, Error> {
+        let test = self
+            .get::<PaginatedResponse<Trade>, TradeQuery>("/trades", Some(query))
+            .await;
+        println!("{:?}", test);
+        test
     }
 
     pub async fn get_politicians(

@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use scraper::Html;
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use url::Url;
 
 use crate::Error;
@@ -52,7 +52,7 @@ pub trait Query {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub enum SortDirection {
     Asc = 0,
     Desc = 1,
@@ -74,7 +74,7 @@ impl FromStr for SortDirection {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct QueryCommon {
     pub page: i64,
     pub page_size: Option<i64>,

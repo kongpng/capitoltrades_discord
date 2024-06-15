@@ -1,12 +1,13 @@
 use std::str::FromStr;
 
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use url::Url;
 
-use crate::types::{IssuerID, TradeSize};
+use crate::types::{trade::TradeSize, IssuerID};
 
 use super::common::{Query, QueryCommon, SortDirection};
 
-#[derive(Default)]
+#[derive(Default, Deserialize, Serialize)]
 pub struct TradeQuery {
     pub common: QueryCommon,
     pub issuer_ids: Vec<IssuerID>,
@@ -69,7 +70,7 @@ impl TradeQuery {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub enum TradeSortBy {
     PublicationDate = 0,
     TradeDate = 1,
@@ -113,7 +114,7 @@ mod tests {
 
     use crate::{
         query::{common::SortDirection, trade::TradeSortBy, Query, TradeQuery},
-        types::TradeSize,
+        types::trade::TradeSize,
     };
 
     #[test]

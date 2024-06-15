@@ -1,16 +1,25 @@
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{naive, DateTime, NaiveDate, Utc};
+use scraper::{ElementRef, Selector};
 use serde::{Deserialize, Serialize};
+
+use crate::Error;
 
 use super::{
     issuer::Sector,
-    meta::DataType,
     politician::{Politician, PoliticianID},
     Chamber, IssuerID,
 };
 
 extern crate serde_json;
 
-#[derive(Copy, Clone)]
+pub trait ExtractableItem {
+    fn selector() -> Selector;
+    fn extract(item: ElementRef) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
+
+#[derive(Copy, Clone, Deserialize, Serialize)]
 pub enum TradeSize {
     Less1K = 1,
     From1Kto15K = 2,
@@ -24,7 +33,82 @@ pub enum TradeSize {
     From25Mto50M = 10,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+impl ExtractableItem for Trade {
+    fn selector() -> Selector {
+        if let Some(selector) = Selector::parse(".q-table").ok() {
+            println!("Found selector");
+            selector
+        } else {
+            panic!("no");
+        }
+    }
+
+    fn extract(item: ElementRef) -> Result<Self, Error> {
+        println!("yes");
+        let tx_id: i64 = item
+            .select(&Selector::parse(".q-table > thead:nth-child(1) > tr:nth-child(1)").unwrap())
+            .next()
+            .and_then(|link: ElementRef| link.value().attr("href"))
+            .and_then(|href| href.split('/').last())
+            .and_then(|id| id.parse().ok())
+            .unwrap_or_default();
+
+        let politician_id = item
+            .select(&Selector::parse("h3.q-fieldset.politician-name").unwrap())
+            .next()
+            .map(|t| t.text().collect::<String>())
+            .unwrap_or_default();
+
+        let ticker = item
+            .select(&Selector::parse("span.q-field.issuer-ticker").unwrap())
+            .next()
+            .map(|t| t.text().collect::<String>())
+            .unwrap_or_default();
+
+        let amount = item
+            .select(&Selector::parse("span.q-field.trade-size").unwrap())
+            .next()
+            .map(|a| {
+                a.text()
+                    .collect::<String>()
+                    .parse::<i64>()
+                    .unwrap_or_default()
+            })
+            .unwrap_or_default();
+
+        print!("{:?}  cock", tx_id);
+        Ok(Trade {
+            tx_id,
+            value: amount,
+            politician_id,
+            asset_id: 0,
+            issuer_id: 0,
+            pub_date: DateTime::from_timestamp(0, 0).unwrap(),
+            filing_date: NaiveDate::from_ymd_opt(2000, 1, 1).unwrap(),
+            tx_date: NaiveDate::from_ymd_opt(2000, 1, 1).unwrap(),
+            tx_type: TxType::Buy,
+            tx_type_extended: None,
+            has_capital_gains: false,
+            owner: Owner::Child,
+            chamber: Chamber::House,
+            price: None,
+            size: None,
+            size_range_high: None,
+            size_range_low: None,
+            filing_id: 0,
+            filing_url: 0.to_string(),
+            reporting_gap: 0,
+            comment: None,
+            committees: vec![],
+            asset: Asset::default(),
+            issuer: Issuer::default(),
+            politician: Politician::default(),
+            labels: vec![],
+        })
+    }
+}
+
+#[derive(Serialize, Deserialize, Default, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Trade {
     #[serde(rename = "_txId")]
@@ -85,16 +169,7 @@ pub struct Trade {
     pub labels: Vec<String>,
 }
 
-impl From<DataType> for Trade {
-    fn from(item: DataType) -> Self {
-        match item {
-            DataType::Trade(trade) => trade,
-            _ => panic!("Expected DataItem::Trade"),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Asset {
     pub asset_type: String,
@@ -104,7 +179,7 @@ pub struct Asset {
     pub instrument: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Issuer {
     #[serde(rename = "_stateId")]
@@ -122,9 +197,10 @@ pub struct Issuer {
     pub sector: Option<Sector>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy)]
+#[derive(Serialize, Deserialize, Default, Clone, Copy, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub enum Owner {
+    #[default]
     Child,
     Joint,
     NotDisclosed,
@@ -133,9 +209,10 @@ pub enum Owner {
     Spouse,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy)]
+#[derive(Serialize, Deserialize, Clone, Copy, Default, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub enum TxType {
+    #[default]
     Buy,
     Sell,
     Exchange,

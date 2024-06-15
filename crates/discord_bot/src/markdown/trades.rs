@@ -1,5 +1,8 @@
 use crate::markdown::politicians::politician_to_markdown;
-use capitoltrades_api::types::{Asset, Trade};
+use capitoltrades_api::types::{
+    self,
+    trade::{Asset, Trade},
+};
 use pulldown_cmark::{html, Parser};
 
 fn asset_to_markdown(asset: &Asset) -> String {

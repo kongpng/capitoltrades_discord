@@ -1,11 +1,14 @@
 pub mod meta;
+use scraper::{ElementRef, Selector};
+
+use crate::Error;
+
 pub use self::meta::{Meta, PaginatedResponse, Paging, Response};
 
-mod issuer;
+pub mod issuer;
 pub use self::issuer::{EodPrice, IssuerDetail, IssuerID, MarketCap, Performance, Sector};
 
-mod trade;
-pub use self::trade::{Asset, Trade, TradeSize};
+pub mod trade;
 
 mod politician;
 pub use self::politician::{Chamber, Gender, Party, Politician, PoliticianDetail, PoliticianID};

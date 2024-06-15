@@ -1,13 +1,69 @@
 use std::clone;
 
 use chrono::NaiveDate;
+use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 
-use super::meta::DataType;
+use crate::Error;
+
+use super::{meta::Extractable, trade::ExtractableItem, Response};
 
 extern crate serde_json;
 
 pub type IssuerID = i64;
+
+impl ExtractableItem for IssuerDetail {
+    fn selector() -> Selector {
+        Selector::parse("article.issuer-item").unwrap()
+    }
+
+    fn extract(item: ElementRef) -> Result<Self, Error> {
+        let id = item
+            .value()
+            .attr("data-issuer-id")
+            .unwrap_or_default()
+            .parse()
+            .unwrap_or_default();
+        let name = item
+            .select(&Selector::parse("h2.issuer-name").unwrap())
+            .next()
+            .map(|n| n.text().collect())
+            .unwrap_or_default();
+        let ticker = item
+            .select(&Selector::parse("span.issuer-ticker").unwrap())
+            .next()
+            .map(|t| t.text().collect())
+            .unwrap_or_default();
+
+        Ok(IssuerDetail {
+            issuer_id: id,
+            state_id: None,
+            c2_iq: None,
+            country: None,
+            issuer_name: name,
+            issuer_ticker: Some(ticker),
+            performance: None,
+            sector: None,
+            stats: Stats {
+                count_trades: 0,
+                volume: 0,
+                count_politicians: 0,
+                date_last_traded: NaiveDate::from_ymd_opt(2000, 1, 1).unwrap(),
+            },
+        })
+    }
+}
+
+impl Extractable for Response<IssuerDetail> {
+    fn extract_data(document: &Html) -> Result<Self, Error> {
+        let issuer_detail =
+            IssuerDetail::extract(document.select(&IssuerDetail::selector()).next().unwrap())?;
+
+        Ok(Response {
+            data: issuer_detail,
+        })
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -77,14 +133,6 @@ pub struct Performance {
 
     pub ytd_change: f64,
 }
-impl From<DataType> for IssuerDetail {
-    fn from(item: DataType) -> Self {
-        match item {
-            DataType::IssuerDetail(issuer) => issuer,
-            _ => panic!("Expected DataItem::IssuerDetail"),
-        }
-    }
-}
 
 impl Performance {
     pub fn last_price(&self) -> Option<f64> {
@@ -145,7 +193,7 @@ pub enum MarketCap {
     Nano = 6,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub enum Sector {
     CommunicationServices,
